@@ -12,15 +12,15 @@ from sklearn.preprocessing import MinMaxScaler
 from keras.models import Sequential
 from keras.layers import Dense, LSTM, Dropout
 
-def visualizar(real,prediccion):
-    plt.plot(real[0:len(prediccion)], color='red',label='Precio real')
+def visualizar(real,prediccion, timeSteps, offset):
+    plt.plot(real[(timeSteps+offset):len(real)], color='red',label='Precio real')
     plt.plot(prediccion, color='blue', label='Precio predicho')
     plt.xlabel('Tiempo')
     plt.legend()
     plt.show()
 
 '''Lectura de datos'''
-df = pd.read_csv('price-btc.csv', index_col='Date', parse_dates=['Date'])
+df = pd.read_csv('price-btc16-02.csv', index_col='Date', parse_dates=['Date'])
 
 '''Train set / test set'''
 train = df[:'2021'].iloc[:,[False,True,False,False,False,False]]
@@ -31,12 +31,13 @@ sc = MinMaxScaler(feature_range=(0,1))
 train_sc = sc.fit_transform(train)
 
 '''Entrenamiento de la red'''
-timeSteps = 100
+timeSteps = 150
+offset = 50
 xTrain = []
 yTrain = []
-for i in range(0, len(train_sc)- timeSteps):
+for i in range(0, len(train_sc)- timeSteps - offset):
     xTrain.append(train_sc[i:i+timeSteps, 0])
-    yTrain.append(train_sc[i+timeSteps, 0])
+    yTrain.append(train_sc[i+timeSteps+offset, 0])
 
 
 '''Hay que usar numpy array por optimización y reshape'''
@@ -55,9 +56,9 @@ na = 50
 regresor = Sequential() #Inicializa el modelo
 
 ''' capa 1 '''
-regresor.add(LSTM(units=na, input_shape=dim_entrada))
-''' capa 2 
-regresor.add(LSTM(units=na))'''
+regresor.add(LSTM(units=na, return_sequences=True, input_shape=dim_entrada))
+''' capa 2 '''
+regresor.add(LSTM(units=na))
 
 ''' capa output '''
 regresor.add(Dense(units=dim_salida))
@@ -73,8 +74,8 @@ regresor.fit(xTrain, yTrain, epochs = 20, batch_size = 32)
 '''Normalizar el conjunto de Test y relizamos las mismas operaciones'''
 auxTest = sc.transform(test.values)
 xTest = []
-for i in range(0, len(auxTest)-timeSteps):
-    xTest.append(auxTest[i:i+timeSteps,0])
+for i in range(0, len(auxTest)-timeSteps-offset):
+    xTest.append(auxTest[i:i+timeSteps+offset,0])
     
 xTest = np.array(xTest)
 xTest = np.reshape(xTest, (xTest.shape[0],xTest.shape[1],1))
@@ -86,7 +87,7 @@ prediccion = regresor.predict(xTest)
 prediccion = sc.inverse_transform(prediccion)
 
 '''Graficamos'''
-visualizar(test.values, prediccion)
+visualizar(test.values, prediccion, timeSteps, offset)
 
 
 
