@@ -31,8 +31,8 @@ sc = MinMaxScaler(feature_range=(0,1))
 train_sc = sc.fit_transform(train)
 
 '''Entrenamiento de la red'''
-timeSteps = 150
-offset = 50
+timeSteps = 100
+offset = 30
 xTrain = []
 yTrain = []
 for i in range(0, len(train_sc)- timeSteps - offset):
@@ -55,10 +55,10 @@ na = 50
     dROPOUT(%) = número de neuronas que queremos ignorar en la capa de regularización (normalmente 20%)'''
 regresor = Sequential() #Inicializa el modelo
 
-''' capa 1 '''
-regresor.add(LSTM(units=na, return_sequences=True, input_shape=dim_entrada))
-''' capa 2 '''
-regresor.add(LSTM(units=na))
+''' capa 1 , return_sequences=True'''
+regresor.add(LSTM(units=na, input_shape=dim_entrada))
+''' capa 2 
+regresor.add(LSTM(units=na))'''
 
 ''' capa output '''
 regresor.add(Dense(units=dim_salida))
